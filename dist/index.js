@@ -17168,21 +17168,26 @@ async function run() {
     }
 
     var date = new Date();
-    date.setMonth(date.getDay() - 7);
+    date.setDate(date.getDate() - 7);
 
     if (flagsReadyToDelete) {
       for (const key in flagsReadyToDelete) {
         if (Object.hasOwnProperty.call(flagsReadyToDelete, key)) {
           const flag = flagsReadyToDelete[key];
-          if (flag.created_date < date.toISOString() && dryRun === false) {
-            const res = await flagsmithAPI.deleteFlag(
-              flagsmithUrl,
-              flagsmithToken,
-              flag.id
-            );
-            core.info(res);
+          const createdDate = new Date(flag.created_date);
+          if (createdDate < date && dryRun === false) {
+            try {
+              const res = await flagsmithAPI.deleteFlag(
+                flagsmithUrl,
+                flagsmithToken,
+                flag.id
+              );
+              core.info(`Deleted flag: ${flag.name} - ${res}`);
+              deletedFlags.push(flag.name);
+            } catch (err) {
+              core.error(`Error deleting flag ${flag.name}: ${err.message}`);
+            }
           }
-          deletedFlags.push(flag.name);
         }
       }
     }
